@@ -1,0 +1,4 @@
+domain_path: /home/was/code/FreeRTOS_Container/platform/export/platform/sw/freertos_psu_cortexa53_0
+app_src_dir: /home/was/App/Xilinx/2025.2/Vitis/data/embeddedsw/lib/sw_apps/freertos_hello_world
+template: freertos_hello_world
+lang: c
