@@ -51,6 +51,10 @@ static void echo_err_callback(void *arg, err_t err);
 static void echo_close_connection(struct tcp_pcb *tpcb);
 static void task_test(void *pvParameters);
 
+extern void vUARTCommandConsoleStart( uint16_t usStackSize,
+                               UBaseType_t uxPriority );
+extern void vRegisterSampleCLICommands( void );
+
 unsigned char data[] = {
     0x7f, 0x45, 0x4c, 0x46, 0x02, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0xb7, 0x00, 0x01, 0x00, 0x00, 0x00,
@@ -129,6 +133,8 @@ int main(void)
     vPortInstallFreeRTOSVectorTable();
     
 
+    vUARTCommandConsoleStart(4096, 5);
+    vRegisterSampleCLICommands();
     /* 创建主任务 - 使用更高优先级以确保能得到调度 */
     xTaskCreate(task_test, 
                 "test_task", 
