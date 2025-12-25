@@ -1,0 +1,4 @@
+domain_path: /home/was/code/FreeRTOS_Container/zcu102/export/zcu102/sw/standalone_psu_cortexa53_0
+app_src_dir: /home/was/App/Xilinx/2025.2/Vitis/data/embeddedsw/lib/sw_apps/empty_application
+template: empty_application
+lang: c

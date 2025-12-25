@@ -1,0 +1,62 @@
+# Ignore build output directory
+/build
+/export
+
+# Ignore object files and dependent files
+*.o
+*.d
+*.obj
+*.elf
+*.a
+*.lib
+
+# Ignore generated files
+*.map
+*.lst
+*.size
+
+# Ignore logs folder and log files
+/logs
+*.log
+
+# Ignore lock files
+*.lock
+
+# Ignore binary files
+*.bin
+*.pdi
+*.vitisWorkspace.json
+
+# Ignore IDE files
+_ide/logs
+_ide/.wsdata
+.settings/
+.project
+.cproject
+
+
+# Ignore compile_commands and clangd cache
+compile_commands.json
+.clangd
+.cache/
+.compile_commands/
+
+# Ignore CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+*.ninja
+.ninja_deps
+.ninja_log
+Makefile
+
+# Ignore backup files
+*.bak
+*.orig
+*~
+
+# Ignore macOS files
+.DS_Store
+
+# Ignore Windows files
+Thumbs.db
