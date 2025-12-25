@@ -16,7 +16,8 @@ MEMORY
 	psu_ddr_0_memory_0 : ORIGIN = 0x0, LENGTH = 0x7ff00000
 	psu_qspi_linear_0_memory_0 : ORIGIN = 0xc0000000, LENGTH = 0x20000000
 	psu_ocm_ram_0_memory_0 : ORIGIN = 0xfffc0000, LENGTH = 0x40000
-}
+	freertos_got : ORIGIN = 0x7fe00000, LENGTH = 0x100000
+ }
 
 /* Specify the default entry point to the program */
 
@@ -231,6 +232,12 @@ SECTIONS
     __drvcfgsecdata_size = __drvcfgsecdata_end - __drvcfgsecdata_start;
 } > psu_ddr_0_memory_0
 
+.freertos_got : {
+    __freertos_got_start = .;
+    KEEP (*(.freertos_got))
+    __freertos_got_end = .;
+} > freertos_got
+
 .ARM.attributes : {
    __ARM.attributes_start = .;
    *(.ARM.attributes)
@@ -319,7 +326,6 @@ _SDA2_BASE_ = __sdata2_start + ((__sbss2_end - __sdata2_start) / 2 );
    . = ALIGN(64);
    __el0_stack = .;
 } > psu_ddr_0_memory_0
-
 
 _end = .;
 }

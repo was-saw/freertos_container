@@ -763,9 +763,9 @@ static void prvTaskExitError( void )
 	/* A function that implements a task must not exit or attempt to return to
 	its caller as there is nothing to return to.  If a task wants to exit it
 	should instead call vTaskDelete( NULL ) */
-	xil_printf("Warning: return statement has been called from task %s, deleting it\n", pcTaskGetName(NULL));
+	xil_printf("Warning: return statement has been called from task %s, deleting it\r\n", pcTaskGetName(NULL));
 	if (uxTaskGetNumberOfTasks() == 2) {
-		xil_printf("Warning: Kernel does not have any task to manage other than idle task\n");
+		xil_printf("Warning: Kernel does not have any task to manage other than idle task\r\n");
 	}
 	vTaskDelete( NULL );
 }

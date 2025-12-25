@@ -86,5 +86,6 @@ void FreeRTOS_SetupTickInterrupt(void);
 #define portSET_INTERRUPT_MASK_FROM_ISR() uxPortSetInterruptMask()
 #define portCLEAR_INTERRUPT_MASK_FROM_ISR(x) vPortClearInterruptMask(x)
 
+#define configUSE_ELF_LOADER 0x1
 
 #endif /* _FREERTOSCONFIG_H */
