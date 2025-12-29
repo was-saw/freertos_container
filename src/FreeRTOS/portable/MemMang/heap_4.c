@@ -45,6 +45,10 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
+#if (configUSE_CGROUPS == 1)
+#include "cgroup.h"
+#endif
+
 #undef MPU_WRAPPERS_INCLUDED_FROM_API_FILE
 
 #if ( configSUPPORT_DYNAMIC_ALLOCATION == 0 )
@@ -155,6 +159,27 @@ void * pvPortMalloc( size_t xWantedSize )
         {
             mtCOVERAGE_TEST_MARKER();
         }
+
+#if (configUSE_CGROUPS == 1)
+        {
+          /* Check if the current task's cgroup allows this memory allocation */
+          TaskHandle_t xCurrentTask = xTaskGetCurrentTaskHandle();
+          if (xCurrentTask != NULL) {
+            if (xCGroupCheckMemoryLimit(xCurrentTask, xWantedSize) == pdFALSE) {
+              /* Memory allocation would exceed cgroup limit */
+              (void)xTaskResumeAll();
+
+#if (configUSE_MALLOC_FAILED_HOOK == 1)
+              {
+                vApplicationMallocFailedHook();
+              }
+#endif
+
+              return NULL;
+            }
+          }
+        }
+#endif /* configUSE_CGROUPS */
 
         if( xWantedSize > 0 )
         {
@@ -283,6 +308,23 @@ void * pvPortMalloc( size_t xWantedSize )
         }
 
         traceMALLOC( pvReturn, xWantedSize );
+
+#if (configUSE_CGROUPS == 1)
+        {
+          /* Update cgroup memory usage statistics */
+          if (pvReturn != NULL) {
+            TaskHandle_t xCurrentTask = xTaskGetCurrentTaskHandle();
+            if (xCurrentTask != NULL) {
+              /* Get the block link from the returned pointer */
+              BlockLink_t *pxAllocatedBlock =
+                  (BlockLink_t *)(((uint8_t *)pvReturn) - xHeapStructSize);
+              xCGroupUpdateMemoryUsage(
+                  xCurrentTask, (BaseType_t)(pxAllocatedBlock->xBlockSize &
+                                             ~heapBLOCK_ALLOCATED_BITMASK));
+            }
+          }
+        }
+#endif /* configUSE_CGROUPS */
     }
     ( void ) xTaskResumeAll();
 
@@ -341,6 +383,17 @@ void vPortFree( void * pv )
                     traceFREE( pv, pxLink->xBlockSize );
                     prvInsertBlockIntoFreeList( ( ( BlockLink_t * ) pxLink ) );
                     xNumberOfSuccessfulFrees++;
+
+#if (configUSE_CGROUPS == 1)
+                    {
+                      /* Update cgroup memory usage statistics (decrease) */
+                      TaskHandle_t xCurrentTask = xTaskGetCurrentTaskHandle();
+                      if (xCurrentTask != NULL) {
+                        xCGroupUpdateMemoryUsage(
+                            xCurrentTask, -((BaseType_t)pxLink->xBlockSize));
+                      }
+                    }
+#endif /* configUSE_CGROUPS */
                 }
                 ( void ) xTaskResumeAll();
             }

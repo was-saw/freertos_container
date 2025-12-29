@@ -34,7 +34,7 @@
 #define	configMAX_API_CALL_INTERRUPT_PRIORITY	18
 #define	configMAX_PRIORITIES			(8)
 #define	configMINIMAL_STACK_SIZE		((unsigned short) 200)
-#define	configTOTAL_HEAP_SIZE			((size_t)65536)
+#define configTOTAL_HEAP_SIZE ((size_t)(1024 * 1024 * 1024)) /* 1GB */
 #define	configMAX_TASK_NAME_LEN			10
 #define	configQUEUE_REGISTRY_SIZE		10
 #define	configCHECK_FOR_STACK_OVERFLOW		2
@@ -87,5 +87,22 @@ void FreeRTOS_SetupTickInterrupt(void);
 #define portCLEAR_INTERRUPT_MASK_FROM_ISR(x) vPortClearInterruptMask(x)
 
 #define configUSE_ELF_LOADER 0x1
+
+/* CGroup configuration */
+#define configUSE_CGROUPS 1
+#define configMAX_CGROUPS 8
+#define configMAX_CGROUP_NAME_LEN 16
+
+/* PID Namespace configuration */
+#define configUSE_PID_NAMESPACE 1
+#define configMAX_PID_NAMESPACES 4
+#define configMAX_PID_NAMESPACE_NAME_LEN 16
+#define configPID_NAMESPACE_MAX_PID 32
+
+/* IPC Namespace configuration */
+#define configUSE_IPC_NAMESPACE 1
+#define configMAX_IPC_NAMESPACES 4
+#define configMAX_IPC_NAMESPACE_NAME_LEN 16
+#define configMAX_IPC_OBJECTS_PER_NAMESPACE 32
 
 #endif /* _FREERTOSCONFIG_H */

@@ -3206,7 +3206,107 @@ void vTaskInternalSetTimeOutState( TimeOut_t * const pxTimeOut ) PRIVILEGED_FUNC
 
 #endif /* portUSING_MPU_WRAPPERS */
 
-/* *INDENT-OFF* */
+    /*-----------------------------------------------------------
+     * PID NAMESPACE SUPPORT
+     *----------------------------------------------------------*/
+#if (configUSE_PID_NAMESPACE == 1)
+
+    /**
+     * @brief Set the PID namespace for a task
+     *
+     * @param xTask Task handle (use NULL for current task)
+     * @param pxNamespaceHandle Handle to the PID namespace
+     * @param ulVirtualPid Virtual PID assigned to the task
+     * @return pdPASS on success, pdFAIL on failure
+     */
+    BaseType_t
+    xTaskSetPidNamespace(TaskHandle_t xTask, void *pxNamespaceHandle,
+                         UBaseType_t ulVirtualPid) PRIVILEGED_FUNCTION;
+
+    /**
+     * @brief Get the PID namespace of a task
+     *
+     * @param xTask Task handle (use NULL for current task)
+     * @return PID namespace handle, or NULL if not in any namespace
+     */
+    void *pvTaskGetPidNamespace(TaskHandle_t xTask) PRIVILEGED_FUNCTION;
+
+    /**
+     * @brief Get the virtual PID of a task
+     *
+     * @param xTask Task handle (use NULL for current task)
+     * @return Virtual PID, or 0 if not in any namespace
+     */
+    UBaseType_t uxTaskGetVirtualPid(TaskHandle_t xTask) PRIVILEGED_FUNCTION;
+
+    /**
+     * @brief Get the real (system-wide unique) PID of a task
+     *
+     * @param xTask Task handle (use NULL for current task)
+     * @return Real PID of the task
+     */
+    UBaseType_t uxTaskGetRealPid(TaskHandle_t xTask) PRIVILEGED_FUNCTION;
+
+    /**
+     * @brief Get the virtual PID of the current calling task
+     * Convenience function for applications.
+     *
+     * @return Virtual PID of the current task, or 0 if not in any namespace
+     */
+    UBaseType_t uxGetPid(void) PRIVILEGED_FUNCTION;
+
+    /**
+     * @brief Get the real (system-wide unique) PID of the current calling task
+     * Convenience function for applications.
+     *
+     * @return Real PID of the current task
+     */
+    UBaseType_t uxGetRealPid(void) PRIVILEGED_FUNCTION;
+
+    /**
+     * @brief Get the PID namespace of the current calling task
+     * Convenience function for applications.
+     *
+     * @return Namespace handle, or NULL if task is not in any namespace
+     */
+    void *pvGetPidNamespace(void) PRIVILEGED_FUNCTION;
+
+#endif /* configUSE_PID_NAMESPACE */
+
+    /*-----------------------------------------------------------
+     * IPC NAMESPACE SUPPORT
+     *----------------------------------------------------------*/
+#if (configUSE_IPC_NAMESPACE == 1)
+
+    /**
+     * @brief Set the IPC namespace for a task
+     *
+     * @param xTask Task handle (use NULL for current task)
+     * @param pxNamespaceHandle Handle to the IPC namespace
+     * @return pdPASS on success, pdFAIL on failure
+     */
+    BaseType_t xTaskSetIpcNamespace(TaskHandle_t xTask, void *pxNamespaceHandle)
+        PRIVILEGED_FUNCTION;
+
+    /**
+     * @brief Get the IPC namespace of a task
+     *
+     * @param xTask Task handle (use NULL for current task)
+     * @return IPC namespace handle, or NULL if not in any namespace
+     */
+    void *pvTaskGetIpcNamespace(TaskHandle_t xTask) PRIVILEGED_FUNCTION;
+
+    /**
+     * @brief Get the IPC namespace of the current calling task
+     * Convenience function for applications.
+     *
+     * @return IPC namespace handle, or NULL if task is not in any namespace
+     */
+    void *pvGetIpcNamespace(void) PRIVILEGED_FUNCTION;
+
+#endif /* configUSE_IPC_NAMESPACE */
+
+    /* *INDENT-OFF* */
 #ifdef __cplusplus
     }
 #endif

@@ -33,6 +33,8 @@ set(USER_INCLUDE_DIRECTORIES
 "FreeRTOS/include"
 "FreeRTOS/portable/GCC/ARM_CA53"
 "drivers"
+"FreeRTOS_Plus_Container/include"
+"FreeRTOS_Plus_Container/examples"
 )
 
 #Add any source below, they will be added as Compile sources.
@@ -60,6 +62,13 @@ set(USER_COMPILE_SOURCES
 "FreeRTOS-Plus-CLI/Sample-CLI-commands.c"
 "FreeRTOS-Plus-CLI/UARTCommandConsole.c"
 "drivers/serial.c"
+"FreeRTOS_Plus_Container/cgroup.c"
+"FreeRTOS_Plus_Container/container.c"
+"FreeRTOS_Plus_Container/container_image.c"
+"FreeRTOS_Plus_Container/file_system.c"
+"FreeRTOS_Plus_Container/ipc_namespace.c"
+"FreeRTOS_Plus_Container/pid_namespace.c"
+"FreeRTOS_Plus_Container/examples/container_example.c"
 )
 
 # -----------------------------------------
