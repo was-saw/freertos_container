@@ -41,6 +41,18 @@
 #include "timers.h"
 #include "stack_macros.h"
 
+#if (configUSE_CGROUPS == 1)
+#include "cgroup.h"
+#endif
+
+#if (configUSE_PID_NAMESPACE == 1)
+#include "pid_namespace.h"
+#endif
+
+#if (configUSE_IPC_NAMESPACE == 1)
+#include "ipc_namespace.h"
+#endif
+
 /* Lint e9021, e961 and e750 are suppressed as a MISRA exception justified
  * because the MPU ports require MPU_WRAPPERS_INCLUDED_FROM_API_FILE to be defined
  * for the header files above, but not in this file, in order to generate the
@@ -322,6 +334,25 @@ typedef struct tskTaskControlBlock       /* The old naming convention is used to
     #if ( configUSE_POSIX_ERRNO == 1 )
         int iTaskErrno;
     #endif
+
+#if (configUSE_CGROUPS == 1)
+        void *pxCGroupHandle; /**< Handle to the cgroup this task belongs to. */
+        UBaseType_t ulCGroupTickCount; /**< Time slices used by this task in
+                                          current window. */
+#endif
+
+#if (configUSE_PID_NAMESPACE == 1)
+        void *pxPidNamespaceHandle; /**< Handle to the PID namespace this task
+                                       belongs to. */
+        UBaseType_t
+            ulVirtualPid; /**< Virtual PID of this task in its namespace. */
+        UBaseType_t ulRealPid; /**< Real task ID (unique across system). */
+#endif
+
+#if (configUSE_IPC_NAMESPACE == 1)
+        void *pxIpcNamespaceHandle; /**< Handle to the IPC namespace this task
+                                       belongs to. */
+#endif
 } tskTCB;
 
 /* The old tskTCB name is maintained above then typedefed to the new TCB_t name
@@ -962,57 +993,90 @@ static void prvInitialiseNewTask( TaskFunction_t pxTaskCode,
     }
     #endif
 
-    /* Initialize the TCB stack to look as if the task was already running,
-     * but had been interrupted by the scheduler.  The return address is set
-     * to the start of the task function. Once the stack has been initialised
-     * the top of stack variable is updated. */
-    #if ( portUSING_MPU_WRAPPERS == 1 )
+#if (configUSE_CGROUPS == 1)
     {
-        /* If the port has capability to detect stack overflow,
-         * pass the stack end address to the stack initialization
-         * function as well. */
-        #if ( portHAS_STACK_OVERFLOW_CHECKING == 1 )
-        {
-            #if ( portSTACK_GROWTH < 0 )
-            {
-                pxNewTCB->pxTopOfStack = pxPortInitialiseStack( pxTopOfStack, pxNewTCB->pxStack, pxTaskCode, pvParameters, xRunPrivileged, &( pxNewTCB->xMPUSettings ) );
-            }
-            #else /* portSTACK_GROWTH */
-            {
-                pxNewTCB->pxTopOfStack = pxPortInitialiseStack( pxTopOfStack, pxNewTCB->pxEndOfStack, pxTaskCode, pvParameters, xRunPrivileged, &( pxNewTCB->xMPUSettings ) );
-            }
-            #endif /* portSTACK_GROWTH */
-        }
-        #else /* portHAS_STACK_OVERFLOW_CHECKING */
-        {
-            pxNewTCB->pxTopOfStack = pxPortInitialiseStack( pxTopOfStack, pxTaskCode, pvParameters, xRunPrivileged, &( pxNewTCB->xMPUSettings ) );
-        }
-        #endif /* portHAS_STACK_OVERFLOW_CHECKING */
+      /* Initialize cgroup fields */
+      pxNewTCB->pxCGroupHandle = NULL;
+      pxNewTCB->ulCGroupTickCount = 0U;
     }
-    #else /* portUSING_MPU_WRAPPERS */
+#endif
+
+#if (configUSE_PID_NAMESPACE == 1)
     {
-        /* If the port has capability to detect stack overflow,
-         * pass the stack end address to the stack initialization
-         * function as well. */
-        #if ( portHAS_STACK_OVERFLOW_CHECKING == 1 )
-        {
-            #if ( portSTACK_GROWTH < 0 )
-            {
-                pxNewTCB->pxTopOfStack = pxPortInitialiseStack( pxTopOfStack, pxNewTCB->pxStack, pxTaskCode, pvParameters );
-            }
-            #else /* portSTACK_GROWTH */
-            {
-                pxNewTCB->pxTopOfStack = pxPortInitialiseStack( pxTopOfStack, pxNewTCB->pxEndOfStack, pxTaskCode, pvParameters );
-            }
-            #endif /* portSTACK_GROWTH */
-        }
-        #else /* portHAS_STACK_OVERFLOW_CHECKING */
-        {
-            pxNewTCB->pxTopOfStack = pxPortInitialiseStack( pxTopOfStack, pxTaskCode, pvParameters );
-        }
-        #endif /* portHAS_STACK_OVERFLOW_CHECKING */
+      /* Initialize PID namespace fields */
+      pxNewTCB->pxPidNamespaceHandle = NULL;
+      pxNewTCB->ulVirtualPid = 0U;
+      pxNewTCB->ulRealPid = uxTaskNumber; /* Use task number as real PID */
     }
-    #endif /* portUSING_MPU_WRAPPERS */
+#endif
+
+#if (configUSE_IPC_NAMESPACE == 1)
+    {
+      /* Initialize IPC namespace fields */
+      pxNewTCB->pxIpcNamespaceHandle = NULL;
+    }
+#endif
+
+/* Initialize the TCB stack to look as if the task was already running,
+ * but had been interrupted by the scheduler.  The return address is set
+ * to the start of the task function. Once the stack has been initialised
+ * the top of stack variable is updated. */
+#if (portUSING_MPU_WRAPPERS == 1)
+  {
+/* If the port has capability to detect stack overflow,
+ * pass the stack end address to the stack initialization
+ * function as well. */
+#if (portHAS_STACK_OVERFLOW_CHECKING == 1)
+    {
+#if (portSTACK_GROWTH < 0)
+      {
+        pxNewTCB->pxTopOfStack = pxPortInitialiseStack(
+            pxTopOfStack, pxNewTCB->pxStack, pxTaskCode, pvParameters,
+            xRunPrivileged, &(pxNewTCB->xMPUSettings));
+      }
+#else /* portSTACK_GROWTH */
+      {
+        pxNewTCB->pxTopOfStack = pxPortInitialiseStack(
+            pxTopOfStack, pxNewTCB->pxEndOfStack, pxTaskCode, pvParameters,
+            xRunPrivileged, &(pxNewTCB->xMPUSettings));
+      }
+#endif /* portSTACK_GROWTH */
+        }
+#else /* portHAS_STACK_OVERFLOW_CHECKING */
+    {
+      pxNewTCB->pxTopOfStack =
+          pxPortInitialiseStack(pxTopOfStack, pxTaskCode, pvParameters,
+                                xRunPrivileged, &(pxNewTCB->xMPUSettings));
+    }
+#endif /* portHAS_STACK_OVERFLOW_CHECKING */
+    }
+#else /* portUSING_MPU_WRAPPERS */
+  {
+/* If the port has capability to detect stack overflow,
+ * pass the stack end address to the stack initialization
+ * function as well. */
+#if ( portHAS_STACK_OVERFLOW_CHECKING == 1 )
+    {
+#if ( portSTACK_GROWTH < 0 )
+      {
+        pxNewTCB->pxTopOfStack = pxPortInitialiseStack(
+            pxTopOfStack, pxNewTCB->pxStack, pxTaskCode, pvParameters);
+      }
+#else /* portSTACK_GROWTH */
+      {
+        pxNewTCB->pxTopOfStack = pxPortInitialiseStack(
+            pxTopOfStack, pxNewTCB->pxEndOfStack, pxTaskCode, pvParameters);
+      }
+#endif /* portSTACK_GROWTH */
+        }
+#else /* portHAS_STACK_OVERFLOW_CHECKING */
+    {
+      pxNewTCB->pxTopOfStack =
+          pxPortInitialiseStack(pxTopOfStack, pxTaskCode, pvParameters);
+    }
+#endif /* portHAS_STACK_OVERFLOW_CHECKING */
+    }
+#endif /* portUSING_MPU_WRAPPERS */
 
     if( pxCreatedTask != NULL )
     {
@@ -2937,18 +3001,23 @@ BaseType_t xTaskIncrementTick( void )
             }
         }
         #endif /* configUSE_PREEMPTION */
-    }
-    else
-    {
-        ++xPendedTicks;
 
-        /* The tick hook gets called at regular intervals, even if the
-         * scheduler is locked. */
-        #if ( configUSE_TICK_HOOK == 1 )
-        {
-            vApplicationTickHook();
-        }
-        #endif
+/* Update cgroup tick and check if current task needs to be throttled */
+#if (configUSE_CGROUPS == 1)
+    {
+      prvCGroupUpdateTick();
+    }
+#endif /* configUSE_CGROUPS */
+  } else {
+    ++xPendedTicks;
+
+/* The tick hook gets called at regular intervals, even if the
+ * scheduler is locked. */
+#if (configUSE_TICK_HOOK == 1)
+    {
+      vApplicationTickHook();
+    }
+#endif
     }
 
     return xSwitchRequired;
@@ -3111,32 +3180,53 @@ void vTaskSwitchContext( void )
         /* Check for stack overflow, if configured. */
         taskCHECK_FOR_STACK_OVERFLOW();
 
-        /* Before the currently running task is switched out, save its errno. */
-        #if ( configUSE_POSIX_ERRNO == 1 )
-        {
-            pxCurrentTCB->iTaskErrno = FreeRTOS_errno;
-        }
-        #endif
+/* Update cgroup usage when task switches out */
+#if (configUSE_CGROUPS == 1)
+    {
+      prvCGroupTaskSwitchOut(pxCurrentTCB);
+
+      /* Update task's individual cgroup tick count */
+      pxCurrentTCB->ulCGroupTickCount++;
+    }
+#endif /* configUSE_CGROUPS */
+
+/* Before the currently running task is switched out, save its errno. */
+#if (configUSE_POSIX_ERRNO == 1)
+    {
+      pxCurrentTCB->iTaskErrno = FreeRTOS_errno;
+    }
+#endif
 
         /* Select a new task to run using either the generic C or port
          * optimised asm code. */
         taskSELECT_HIGHEST_PRIORITY_TASK(); /*lint !e9079 void * is used as this macro is used with timers and co-routines too.  Alignment is known to be fine as the type of the pointer stored and retrieved is the same. */
+
+#if (configUSE_CGROUPS == 1)
+        {
+          /* Check if the selected task can run based on cgroup limits */
+          while (prvCGroupCanTaskRun(pxCurrentTCB) == pdFALSE) {
+            /* Current task cannot run due to cgroup limits, try next task */
+            taskSELECT_HIGHEST_PRIORITY_TASK();
+          }
+        }
+#endif /* configUSE_CGROUPS */
+
         traceTASK_SWITCHED_IN();
 
         /* After the new task is switched in, update the global errno. */
-        #if ( configUSE_POSIX_ERRNO == 1 )
+#if ( configUSE_POSIX_ERRNO == 1 )
         {
             FreeRTOS_errno = pxCurrentTCB->iTaskErrno;
         }
-        #endif
+#endif
 
-        #if ( configUSE_C_RUNTIME_TLS_SUPPORT == 1 )
+#if ( configUSE_C_RUNTIME_TLS_SUPPORT == 1 )
         {
             /* Switch C-Runtime's TLS Block to point to the TLS
              * Block specific to this task. */
             configSET_TLS_BLOCK( pxCurrentTCB->xTLSBlock );
         }
-        #endif
+#endif
     }
 }
 /*-----------------------------------------------------------*/
@@ -5511,9 +5601,150 @@ static void prvAddCurrentTaskToDelayedList( TickType_t xTicksToWait,
 #endif /* portUSING_MPU_WRAPPERS */
 /*-----------------------------------------------------------*/
 
-/* Code below here allows additional code to be inserted into this source file,
- * especially where access to file scope functions and data is needed (for example
- * when performing module tests). */
+    /*-----------------------------------------------------------
+     * PID NAMESPACE SUPPORT
+     *----------------------------------------------------------*/
+#if (configUSE_PID_NAMESPACE == 1)
+
+    BaseType_t xTaskSetPidNamespace(TaskHandle_t xTask, void *pxNamespaceHandle,
+                                    UBaseType_t ulVirtualPid) {
+      TCB_t *pxTCB;
+      BaseType_t xReturn = pdPASS;
+
+      pxTCB = prvGetTCBFromHandle(xTask);
+
+      taskENTER_CRITICAL();
+      {
+        if (pxTCB != NULL) {
+          pxTCB->pxPidNamespaceHandle = pxNamespaceHandle;
+          pxTCB->ulVirtualPid = ulVirtualPid;
+        } else {
+          xReturn = pdFAIL;
+        }
+      }
+      taskEXIT_CRITICAL();
+
+      return xReturn;
+    }
+
+    void *pvTaskGetPidNamespace(TaskHandle_t xTask) {
+      TCB_t *pxTCB;
+      void *pxReturn;
+
+      pxTCB = prvGetTCBFromHandle(xTask);
+      configASSERT(pxTCB != NULL);
+
+      taskENTER_CRITICAL();
+      {
+        pxReturn = pxTCB->pxPidNamespaceHandle;
+      }
+      taskEXIT_CRITICAL();
+
+      return pxReturn;
+    }
+
+    UBaseType_t uxTaskGetVirtualPid(TaskHandle_t xTask) {
+      TCB_t *pxTCB;
+      UBaseType_t uxReturn;
+
+      pxTCB = prvGetTCBFromHandle(xTask);
+      configASSERT(pxTCB != NULL);
+
+      taskENTER_CRITICAL();
+      {
+        uxReturn = pxTCB->ulVirtualPid;
+      }
+      taskEXIT_CRITICAL();
+
+      return uxReturn;
+    }
+
+    UBaseType_t uxTaskGetRealPid(TaskHandle_t xTask) {
+      TCB_t *pxTCB;
+      UBaseType_t uxReturn;
+
+      pxTCB = prvGetTCBFromHandle(xTask);
+      configASSERT(pxTCB != NULL);
+
+      taskENTER_CRITICAL();
+      {
+        uxReturn = pxTCB->ulRealPid;
+      }
+      taskEXIT_CRITICAL();
+
+      return uxReturn;
+    }
+
+    UBaseType_t uxGetPid(void) {
+      /* Get virtual PID of the current calling task */
+      return uxTaskGetVirtualPid(NULL);
+    }
+
+    UBaseType_t uxGetRealPid(void) {
+      /* Get real PID of the current calling task */
+      return uxTaskGetRealPid(NULL);
+    }
+
+    void *pvGetPidNamespace(void) {
+      /* Get namespace of the current calling task */
+      return pvTaskGetPidNamespace(NULL);
+    }
+
+#endif /* configUSE_PID_NAMESPACE */
+    /*-----------------------------------------------------------*/
+
+    /*-----------------------------------------------------------
+     * IPC NAMESPACE SUPPORT
+     *----------------------------------------------------------*/
+#if (configUSE_IPC_NAMESPACE == 1)
+
+    BaseType_t xTaskSetIpcNamespace(TaskHandle_t xTask,
+                                    void *pxNamespaceHandle) {
+      TCB_t *pxTCB;
+      BaseType_t xReturn = pdPASS;
+
+      pxTCB = prvGetTCBFromHandle(xTask);
+
+      taskENTER_CRITICAL();
+      {
+        if (pxTCB != NULL) {
+          pxTCB->pxIpcNamespaceHandle = pxNamespaceHandle;
+        } else {
+          xReturn = pdFAIL;
+        }
+      }
+      taskEXIT_CRITICAL();
+
+      return xReturn;
+    }
+
+    void *pvTaskGetIpcNamespace(TaskHandle_t xTask) {
+      TCB_t *pxTCB;
+      void *pxReturn;
+
+      pxTCB = prvGetTCBFromHandle(xTask);
+      configASSERT(pxTCB != NULL);
+
+      taskENTER_CRITICAL();
+      {
+        pxReturn = pxTCB->pxIpcNamespaceHandle;
+      }
+      taskEXIT_CRITICAL();
+
+      return pxReturn;
+    }
+
+    void *pvGetIpcNamespace(void) {
+      /* Get IPC namespace of the current calling task */
+      return pvTaskGetIpcNamespace(NULL);
+    }
+
+#endif /* configUSE_IPC_NAMESPACE */
+    /*-----------------------------------------------------------*/
+
+    /* Code below here allows additional code to be inserted into this source
+     * file, especially where access to file scope functions and data is needed
+     * (for example when performing module tests). */
 
 #ifdef FREERTOS_MODULE_TEST
     #include "tasks_test_access_functions.h"

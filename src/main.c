@@ -4,6 +4,7 @@
  * 使用FreeRTOS任务和lwIP raw API实现TCP echo服务器
  */
 
+#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -25,6 +26,9 @@
 #include "FreeRTOS_Plus_ELF/elf_loader.h"
 
 #endif
+
+#include "FreeRTOS_Plus_Container/examples/container_example.h"
+
 /* 安装 FreeRTOS 向量表的函数声明 (定义在 port_asm_vectors.S) */
 extern void vPortInstallFreeRTOSVectorTable(void);
 
@@ -124,6 +128,8 @@ unsigned char data[] = {
     0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
+size_t data_size = sizeof(data);
+
 /*
  * main - 程序入口
  */
@@ -145,11 +151,14 @@ int main(void)
                 
 #ifdef configUSE_ELF_LOADER
     int ret = elf_load_and_run(data, sizeof(data));
-    xil_printf("elf exec ret is :{%d}\r\n", ret);
+    xil_printf("\r\nelf exec ret is :{%d}\r\n", ret);
 #endif
 
     xil_printf("\r\n--- FreeRTOS ---version:2\r\n");
     /* 启动调度器 */
+
+    vInitializeExampleContainers();
+
     vTaskStartScheduler();
     
     /* 正常情况下不会运行到这里 */
