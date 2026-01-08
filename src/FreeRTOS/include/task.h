@@ -3306,6 +3306,55 @@ void vTaskInternalSetTimeOutState( TimeOut_t * const pxTimeOut ) PRIVILEGED_FUNC
 
 #endif /* configUSE_IPC_NAMESPACE */
 
+    /*-----------------------------------------------------------
+     * FILESYSTEM SUPPORT
+     *----------------------------------------------------------*/
+#if (configUSE_FILESYSTEM == 1)
+
+    /**
+     * @brief Get the root path of a task
+     *
+     * @param xTask Handle of the task to query, NULL means current task
+     * @param path Buffer to store the root path
+     * @return pdTRUE on success, pdFAIL otherwise
+     */
+    int pvTaskGetRootPath(TaskHandle_t xTask, char* path) PRIVILEGED_FUNCTION;
+
+    /**
+     * @brief Get the current working directory of the calling task
+     *
+     * @param path Buffer to store the current working directory
+     * @return pdTRUE on success, pdFAIL otherwise
+     */
+    int pvTaskGetPwdPath(char* path) PRIVILEGED_FUNCTION;
+
+    /**
+     * @brief Set the current working directory of the calling task
+     *
+     * @param path New working directory path
+     * @return pdTRUE on success, pdFAIL otherwise
+     */
+    int xTaskSetPwdPath(const char* path) PRIVILEGED_FUNCTION;
+
+    /**
+     * @brief Set the root path of the calling task
+     *
+     * @param path New root path
+     * @return pdTRUE on success, pdFAIL otherwise
+     */
+    int xTaskSetRootPath(const char* path) PRIVILEGED_FUNCTION;
+
+    /**
+     * @brief Change the root directory for the calling task
+     * Sets both root path and resets working directory to "/"
+     *
+     * @param path New root path for the task
+     * @return pdTRUE on success, pdFAIL otherwise
+     */
+    int xTaskChroot(const char* path) PRIVILEGED_FUNCTION;
+
+#endif /* configUSE_FILESYSTEM */
+
     /* *INDENT-OFF* */
 #ifdef __cplusplus
     }

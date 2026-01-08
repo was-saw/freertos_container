@@ -353,6 +353,11 @@ typedef struct tskTaskControlBlock       /* The old naming convention is used to
         void *pxIpcNamespaceHandle; /**< Handle to the IPC namespace this task
                                        belongs to. */
 #endif
+
+#ifdef configUSE_FILESYSTEM
+        char cCurrentWorkingDir[configMAX_PATH_LEN]; /**< Current working directory. */
+        char cRootPATH[configMAX_PATH_LEN];          /**< Root directory (chroot). */
+#endif
 } tskTCB;
 
 /* The old tskTCB name is maintained above then typedefed to the new TCB_t name
@@ -1014,6 +1019,16 @@ static void prvInitialiseNewTask( TaskFunction_t pxTaskCode,
     {
       /* Initialize IPC namespace fields */
       pxNewTCB->pxIpcNamespaceHandle = NULL;
+    }
+#endif
+
+#ifdef configUSE_FILESYSTEM
+    {
+        /* Initialize filesystem fields - default to root directory */
+        pxNewTCB->cCurrentWorkingDir[0] = '/';
+        pxNewTCB->cCurrentWorkingDir[1] = '\0';
+        pxNewTCB->cRootPATH[0] = '/';
+        pxNewTCB->cRootPATH[1] = '\0';
     }
 #endif
 
@@ -5740,6 +5755,95 @@ static void prvAddCurrentTaskToDelayedList( TickType_t xTicksToWait,
     }
 
 #endif /* configUSE_IPC_NAMESPACE */
+    /*-----------------------------------------------------------*/
+
+    /*-----------------------------------------------------------
+     * FILESYSTEM SUPPORT
+     *----------------------------------------------------------*/
+#if (configUSE_FILESYSTEM == 1)
+
+int pvTaskGetRootPath(TaskHandle_t xTask, char* path) {
+    TCB_t* pxTCB;
+    int ret = pdFAIL;
+
+    /* If null is passed in here then we are returning the root path of the
+    calling task. */
+    pxTCB = prvGetTCBFromHandle(xTask);
+
+    taskENTER_CRITICAL();
+    {
+        if (pxTCB != NULL && pxTCB->cRootPATH[0] != '\0') {
+            /* Copy root path - simple string copy */
+            memcpy(path, pxTCB->cRootPATH, configMAX_PATH_LEN);
+            ret = pdTRUE;
+        }
+    }
+    taskEXIT_CRITICAL();
+
+    return ret;
+}
+
+int pvTaskGetPwdPath(char* path) {
+    TCB_t* pxTCB = (TCB_t*)xTaskGetCurrentTaskHandle();
+    int ret = pdFAIL;
+
+    taskENTER_CRITICAL();
+    {
+        if (pxTCB != NULL && pxTCB->cCurrentWorkingDir[0] != '\0') {
+            /* Copy current working directory */
+            memcpy(path, pxTCB->cCurrentWorkingDir, configMAX_PATH_LEN);
+            ret = pdTRUE;
+        }
+    }
+    taskEXIT_CRITICAL();
+
+    return ret;
+}
+
+int xTaskSetPwdPath(const char* path) {
+    TCB_t* pxTCB = (TCB_t*)xTaskGetCurrentTaskHandle();
+    int ret = pdFAIL;
+
+    taskENTER_CRITICAL();
+    {
+        if (pxTCB != NULL) {
+            /* Copy new working directory path */
+            memcpy(pxTCB->cCurrentWorkingDir, path, configMAX_PATH_LEN);
+            ret = pdTRUE;
+        }
+    }
+    taskEXIT_CRITICAL();
+
+    return ret;
+}
+
+int xTaskSetRootPath(const char* path) {
+    TCB_t* pxTCB = (TCB_t*)xTaskGetCurrentTaskHandle();
+    int ret = pdFAIL;
+
+    taskENTER_CRITICAL();
+    {
+        if (pxTCB != NULL) {
+            /* Copy new root path */
+            memcpy(pxTCB->cRootPATH, path, configMAX_PATH_LEN);
+            ret = pdTRUE;
+        }
+    }
+    taskEXIT_CRITICAL();
+
+    return ret;
+}
+
+int xTaskChroot(const char* path) {
+    /* Set both root path and current working directory */
+    int ret = xTaskSetRootPath(path);
+    if (ret == pdTRUE) {
+        ret = xTaskSetPwdPath("/");
+    }
+    return ret;
+}
+
+#endif /* configUSE_FILESYSTEM */
     /*-----------------------------------------------------------*/
 
     /* Code below here allows additional code to be inserted into this source

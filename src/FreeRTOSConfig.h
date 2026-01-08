@@ -105,4 +105,11 @@ void FreeRTOS_SetupTickInterrupt(void);
 #define configMAX_IPC_NAMESPACE_NAME_LEN 16
 #define configMAX_IPC_OBJECTS_PER_NAMESPACE 32
 
+/* File System configuration */
+#define configUSE_FILESYSTEM 1
+#define configUSE_LITTLEFS 1
+#define configMAX_PATH_LEN 256
+#define configMAX_FILENAME_LEN 255
+#define configFILESYSTEM_KIND lfs
+
 #endif /* _FREERTOSCONFIG_H */

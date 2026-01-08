@@ -27,6 +27,7 @@ set(USER_UNDEFINED_SYMBOLS
 # Example 3: Adding ${CMAKE_SOURCE_DIR}/data/include to add data/include from this project.
 
 set(USER_INCLUDE_DIRECTORIES
+"FreeRTOS_PLUS_LittleFs"
 "FreeRTOS-Plus-CLI"
 "FreeRTOS_Plus_ELF"
 "src"
@@ -42,6 +43,10 @@ set(USER_INCLUDE_DIRECTORIES
 #Example 2: Adding ../../common/helloworld.c will consider the path as relative to this component directory
 #Example 3: Adding ${MY_ENV}/data/helloworld.c are expanded using project-specific environment settings.
 set(USER_COMPILE_SOURCES
+"FreeRTOS_PLUS_LittleFs/lfs_util.c"
+"FreeRTOS_PLUS_LittleFs/mem_block.c"
+"FreeRTOS_PLUS_LittleFs/lfs_init.c"
+"FreeRTOS_PLUS_LittleFs/lfs.c"
 "FreeRTOS-Plus-CLI/FreeRTOS_CLI.c"
 "FreeRTOS_Plus_ELF/elf_help_print.c"
 "FreeRTOS_Plus_ELF/syscall.c"
@@ -69,6 +74,7 @@ set(USER_COMPILE_SOURCES
 "FreeRTOS_Plus_Container/ipc_namespace.c"
 "FreeRTOS_Plus_Container/pid_namespace.c"
 "FreeRTOS_Plus_Container/examples/container_example.c"
+"FreeRTOS_Plus_Container/examples/file_system_usage_example.c"
 )
 
 # -----------------------------------------

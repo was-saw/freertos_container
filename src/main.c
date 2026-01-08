@@ -22,9 +22,12 @@
 #include "echo_server.h"
 
 #ifdef configUSE_ELF_LOADER
-
 #include "FreeRTOS_Plus_ELF/elf_loader.h"
+#endif
 
+#ifdef configUSE_FILESYSTEM
+#include "file_system.h"
+#include "file_system_usage_example.h"
 #endif
 
 #include "FreeRTOS_Plus_Container/examples/container_example.h"
@@ -153,14 +156,16 @@ int main(void)
     int ret = elf_load_and_run(data, sizeof(data));
     xil_printf("\r\nelf exec ret is :{%d}\r\n", ret);
 #endif
-
-    xil_printf("\r\n--- FreeRTOS ---version:2\r\n");
+    xil_printf("\r\n--- FreeRTOS ---version:3\r\n");
     /* 启动调度器 */
 
     vInitializeExampleContainers();
 
-    vTaskStartScheduler();
+#ifdef configUSE_FILESYSTEM
+    xTaskCreate(vFileSystemExampleTask, "FileSystemTask", 1024, NULL, 6, NULL);
+#endif
     
+    vTaskStartScheduler();
     /* 正常情况下不会运行到这里 */
     while (1);
     
